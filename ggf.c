@@ -37,12 +37,12 @@ bool metCut(){
 }
 
 bool VETO(){
-    if (h.NElectrons==0 && h.NMuons==0) return (true); //add tau photons and b jets
+    if (h.NElectrons==0 && h.NMuons==0 && h.BTagsDeepCSV==0) return (true); // for electrons, muons, and b tags
     else return (false);
 }
 
 bool trackVeto(){
-    return ( h.isoElectronTracks == 0 && h.isoMuonTracks == 0 && h.isoPionTracks == 0 );
+    return ( h.isoElectronTracks == 0 && h.isoMuonTracks == 0 && h.isoPionTracks == 0 ); //pion tracks take care of the tau veto
 }
 
 bool AK4JetPtCut(){
@@ -74,19 +74,27 @@ bool LeadAK8PtEtaMass(){
     else return (false);
 }
 
+bool JetQuality(){
+    if (h.JetsAK8_NsubjettinessTau2->at(0)/h.JetsAK8_NsubjettinessTau1->at(0)>0.35) return (false);
+}
+
+//this is only for VBF
+//RE-DO this guy event selection paragraph 2
 bool AK4Separation(){
     if((h.Jets->at(0).Eta())*(h.Jets->at(1).Eta()>0)) return (false);
     if(fabs((h.Jets->at(0).Eta())-(h.Jets->at(1).Eta())<4)) return (false);
 }
 
 
-void PlotmT(){
+void ggf(){
     
     gStyle->SetOptStat(1);
     
     //canvas & histos
     TCanvas* C = new TCanvas();
-    TH1F* HmT = new TH1F("mT", "Transverse Mass", 50, 0, 4000);
+    const int nbins = 22;
+    float edges[nbins + 1] = {400.0, 500.0, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000, 2100, 2200, 2350, 2550, 2750, 3000};
+    TH1F* HmT = new TH1F("mT", "Transverse Mass", nbins, edges);
     
     //Read events
     int nevents = tr->GetEntries();
@@ -101,7 +109,7 @@ void PlotmT(){
         
         //JpT = JetPt();
         
-        if (metCut() && VETO() && trackVeto() && AK4JetPtCut() && AK4JetPhiCut() && AK8JetPhiCut() && LeadAK8PtEtaMass() && !AK4Separation()){
+        if (metCut() && VETO() && trackVeto() && AK4JetPtCut() && AK4JetPhiCut() && AK8JetPhiCut() && LeadAK8PtEtaMass()){
             mT = sqrt(2*h.JetsAK8->at(0).Pt()*h.MET*(1-cos(fabs(h.JetsAK8->at(0).DeltaPhi(V4_MET)))));
             
             HmT->Fill(mT);
