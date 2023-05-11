@@ -6,7 +6,7 @@
 #include "TTree.h"
 #include "TString.h"
 #include <vector>
-#include "AnalyzeVBF.C"
+#include "AnalyseVBF.C"
 #include <TH2.h>
 #include <TStyle.h>
 #include <TCanvas.h>
@@ -20,73 +20,131 @@ using namespace std;
 TString inFileName ="/Users/gbibim/Here/data/tree_ggFG_mG2000_v3_MC2016.root";
 TFile* f = new TFile(inFileName,"f");
 TTree* tr = (TTree*) f->Get("tree");
-    Analyze h(tr);
+    AnalyseVBF h(tr);
 
 
 float JpT;
 float mT;
 float DPhi;
 TLorentzVector V4_MET;
+TLorentzVector Jet1;
+TLorentzVector Jet2;
+
 
 
 
 //Write cuts here
+
+//pt_miss>200GeV                     DONE
 bool metCut(){
     if (h.MET>200) return (true);
     else return (false);
 }
 
+//Veto: electrons muons and b tags   DONE
 bool VETO(){
     if (h.NElectrons==0 && h.NMuons==0 && h.BTagsDeepCSV==0) return (true); // for electrons, muons, and b tags
     else return (false);
 }
 
+//Veto: tau                          DONE
 bool trackVeto(){
     return ( h.isoElectronTracks == 0 && h.isoMuonTracks == 0 && h.isoPionTracks == 0 ); //pion tracks take care of the tau veto
 }
 
-bool AK4JetPtCut(){
+
+//At least 2 AK4 with PT>30GeV
+/*bool AK4JetPtCut(){
     int j;
     for (int i=0; i<h.Jets->size(); i++) {
         if (h.Jets->at(i).Pt()>30) j++;
     }
     return (j>=2);
-}
+}*/
 
-bool AK4JetPhiCut(){
+//At least 2 AK4 with deltaPhi>0.5 and PT>30GeV
+bool AK4JetPtPhiCut(int i){
     int j;
-    for(int i=0; i<h.Jets->size(); i++){
-        if ((fabs(h.Jets->at(i).DeltaPhi(V4_MET))>0.5)) j++;
+    //for(int i=0; i<h.Jets->size(); i++){
+    if ((h.Jets->at(i).Pt()>30 && fabs(h.Jets->at(i).DeltaPhi(V4_MET))>0.5)){ return (true); //j++;
     }
-    return (j>=2);
+    else{
+        return (false);
+    }
+    //return (j>=2);
 }
 
-bool AK8JetPhiCut(){
+//DeltaR from leading AK8
+bool AK4Separation(int i){
+    int j;
+    //for(int i=0; i<h.Jets->size(); i++){
+        float DeltaPhi = fabs(h.JetsAK8->at(0).Phi()-h.Jets->at(i).Phi());
+        float DeltaEta = fabs(h.JetsAK8->at(0).Eta()-h.Jets->at(i).Eta());
+        float DeltaR = sqrt(DeltaPhi*DeltaPhi + DeltaEta*DeltaEta);
+        
+    if (DeltaR>0.8) return (true);//j++;
+    else return (false);
+    //}
+    //return (j>=2);
+}
+
+
+bool validAK4(){
+    vector<int> indices;
+    int j;
+    for(int i=0; i<h.JetsAK8->size(); i++){
+        if(AK4JetPtPhiCut(i) && AK4Separation(i)){
+            indices.push_back(i);
+        }
+    }
+    
+    if(indices.size()>=2){
+        Jet1.SetPtEtaPhiM(h.Jets->at(indices[0]).Pt(),h.Jets->at(indices[0]).Eta(),h.Jets->at(indices[0]).Phi(),h.Jets->at(indices[0]).M());
+        Jet2.SetPtEtaPhiM(h.Jets->at(indices[1]).Pt(),h.Jets->at(indices[1]).Eta(),h.Jets->at(indices[1]).Phi(),h.Jets->at(indices[1]).M());
+
+        if(h.Jets->at(indices[0]).Eta()*h.Jets->at(indices[1]).Eta()<0 && fabs(h.Jets->at(indices[0]).Eta()-h.Jets->at(indices[1]).Eta())<4 && (Jet1+Jet2).M()>500){
+            return (true);
+        }
+        else return (false);
+    }
+    else{
+        return (false);
+    }
+}
+
+
+//At least 2 AK8 with deltaPhi>0.5
+/*bool AK8JetPhiCut(){
     int j;
     for(int i=0; i<h.JetsAK8->size(); i++){
         if ((fabs(h.JetsAK8->at(i).DeltaPhi(V4_MET))>0.5)) j++;
+        
     }
     return (j>=1);
-}
+}*/
 
+//Leading AK8 pt, eta and mass
 bool LeadAK8PtEtaMass(){
-    if (h.JetsAK8->at(0).Pt()>200 && fabs(h.JetsAK8->at(0).Eta())<2.4 && (h.JetsAK8_softDropMass->at(0)>65 || h.JetsAK8_softDropMass->at(0)<105)) return (true);
-    else return (false);
+    if (h.JetsAK8->at(0).Pt()>200 && fabs(h.JetsAK8->at(0).Eta())<2.4 && h.JetsAK8_softDropMass->at(0)>65 && h.JetsAK8_softDropMass->at(0)<105) return (true);
+    else{
+        return (false);
+    }
 }
 
+//tau21 HP:<0.35, LP:0.35-0.75
 bool JetQuality(){
-    if (h.JetsAK8_NsubjettinessTau2->at(0)/h.JetsAK8_NsubjettinessTau1->at(0)>0.35) return (false);
+    if(h.JetsAK8_NsubjettinessTau2->at(0)/h.JetsAK8_NsubjettinessTau1->at(0)<0.35){
+        //&& h.JetsAK8_NsubjettinessTau2->at(0)/h.JetsAK8_NsubjettinessTau1->at(0)<0.75){
+        return (true);
+    }
+    else{
+        return (false);
+    }
 }
 
-//this is only for VBF
-//RE-DO this guy event selection paragraph 2
-bool AK4Separation(){
-    if((h.Jets->at(0).Eta())*(h.Jets->at(1).Eta()>0)) return (false);
-    if(fabs((h.Jets->at(0).Eta())-(h.Jets->at(1).Eta())<4)) return (false);
-}
 
 
-void ggf(){
+void vbf(){
     
     gStyle->SetOptStat(1);
     
@@ -98,6 +156,7 @@ void ggf(){
     
     //Read events
     int nevents = tr->GetEntries();
+    cout << nevents << endl;
     int N=0;
     for (int event=0; event<nevents; event++){
         h.GetEntry(event);
@@ -109,7 +168,7 @@ void ggf(){
         
         //JpT = JetPt();
         
-        if (metCut() && VETO() && trackVeto() && AK4JetPtCut() && AK4JetPhiCut() && AK8JetPhiCut() && LeadAK8PtEtaMass()){
+        if (metCut() && VETO() && trackVeto() && LeadAK8PtEtaMass() && validAK4() && JetQuality()){
             mT = sqrt(2*h.JetsAK8->at(0).Pt()*h.MET*(1-cos(fabs(h.JetsAK8->at(0).DeltaPhi(V4_MET)))));
             
             HmT->Fill(mT);
