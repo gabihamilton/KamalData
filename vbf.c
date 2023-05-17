@@ -17,7 +17,7 @@
 
 using namespace std;
 
-TString inFileName ="/Users/gbibim/Here/data/tree_ggFG_mG2000_v3_MC2016.root";
+TString inFileName ="/Users/gbibim/Here/KamalData/data/tree_VBFG_mG2000_v3_MC2016.root";
 TFile* f = new TFile(inFileName,"f");
 TTree* tr = (TTree*) f->Get("tree");
     AnalyseVBF h(tr);
@@ -35,19 +35,19 @@ TLorentzVector Jet2;
 
 //Write cuts here
 
-//pt_miss>200GeV                     DONE
+//pt_miss>200GeV
 bool metCut(){
     if (h.MET>200) return (true);
     else return (false);
 }
 
-//Veto: electrons muons and b tags   DONE
+//Veto: electrons muons and b tags
 bool VETO(){
     if (h.NElectrons==0 && h.NMuons==0 && h.BTagsDeepCSV==0) return (true); // for electrons, muons, and b tags
     else return (false);
 }
 
-//Veto: tau                          DONE
+//Veto: tau                          
 bool trackVeto(){
     return ( h.isoElectronTracks == 0 && h.isoMuonTracks == 0 && h.isoPionTracks == 0 ); //pion tracks take care of the tau veto
 }
@@ -164,7 +164,8 @@ void vbf(){
         V4_MET.SetPtEtaPhiE(h.MET,0,h.METPhi,0);
         
         if(h.JetsAK8->size() == 0){
-          continue;}
+          continue;
+        }
         
         //JpT = JetPt();
         
@@ -175,13 +176,14 @@ void vbf(){
         }
         
         
+        
     }
     
     HmT->Draw();
     
-    C->SaveAs("mT_histo.pdf");
+    C->SaveAs("output/mT_histo.png");
     C->SetLogy();
-    C->SaveAs("mT_histo_log.pdf");
+    C->SaveAs("output/mT_histo_log.png");
     delete C;
     
     
