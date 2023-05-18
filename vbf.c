@@ -132,7 +132,7 @@ bool LeadAK8PtEtaMass(){
 }
 
 //tau21 HP:<0.35, LP:0.35-0.75
-bool JetQuality(){
+bool JetTau21(){
     if(h.JetsAK8_NsubjettinessTau2->at(0)/h.JetsAK8_NsubjettinessTau1->at(0)<0.35){
     //if(h.JetsAK8_NsubjettinessTau2->at(0)/h.JetsAK8_NsubjettinessTau1->at(0)>0.35 && h.JetsAK8_NsubjettinessTau2->at(0)/h.JetsAK8_NsubjettinessTau1->at(0)<0.75){
         return (true);
@@ -169,7 +169,7 @@ void vbf(){
         
         //JpT = JetPt();
         
-        if (metCut() && VETO() && trackVeto() && LeadAK8PtEtaMass() && validAK4() && JetQuality()){
+        if (metCut() && VETO() && trackVeto() && LeadAK8PtEtaMass() && validAK4() && JetTau21()){
             mT = sqrt(2*h.JetsAK8->at(0).Pt()*h.MET*(1-cos(fabs(h.JetsAK8->at(0).DeltaPhi(V4_MET)))));
             
             HmT->Fill(mT);
