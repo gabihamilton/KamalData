@@ -47,7 +47,7 @@ bool VETO(){
     else return (false);
 }
 
-//Veto: tau                          
+//Veto: tau
 bool trackVeto(){
     return ( h.isoElectronTracks == 0 && h.isoMuonTracks == 0 && h.isoPionTracks == 0 ); //pion tracks take care of the tau veto
 }
@@ -92,7 +92,7 @@ bool AK4Separation(int i){
 bool validAK4(){
     vector<int> indices;
     int j;
-    for(int i=0; i<h.JetsAK8->size(); i++){
+    for(int i=0; i<h.Jets->size(); i++){
         if(AK4JetPtPhiCut(i) && AK4Separation(i)){
             indices.push_back(i);
         }
@@ -102,7 +102,7 @@ bool validAK4(){
         Jet1.SetPtEtaPhiM(h.Jets->at(indices[0]).Pt(),h.Jets->at(indices[0]).Eta(),h.Jets->at(indices[0]).Phi(),h.Jets->at(indices[0]).M());
         Jet2.SetPtEtaPhiM(h.Jets->at(indices[1]).Pt(),h.Jets->at(indices[1]).Eta(),h.Jets->at(indices[1]).Phi(),h.Jets->at(indices[1]).M());
 
-        if(h.Jets->at(indices[0]).Eta()*h.Jets->at(indices[1]).Eta()<0 && fabs(h.Jets->at(indices[0]).Eta()-h.Jets->at(indices[1]).Eta())<4 && (Jet1+Jet2).M()>500){
+        if(h.Jets->at(indices[0]).Eta()*h.Jets->at(indices[1]).Eta()<0 && fabs(h.Jets->at(indices[0]).Eta()-h.Jets->at(indices[1]).Eta())>4 && (Jet1+Jet2).M()>500){
             return (true);
         }
         else return (false);
@@ -134,7 +134,7 @@ bool LeadAK8PtEtaMass(){
 //tau21 HP:<0.35, LP:0.35-0.75
 bool JetQuality(){
     if(h.JetsAK8_NsubjettinessTau2->at(0)/h.JetsAK8_NsubjettinessTau1->at(0)<0.35){
-        //&& h.JetsAK8_NsubjettinessTau2->at(0)/h.JetsAK8_NsubjettinessTau1->at(0)<0.75){
+    //if(h.JetsAK8_NsubjettinessTau2->at(0)/h.JetsAK8_NsubjettinessTau1->at(0)>0.35 && h.JetsAK8_NsubjettinessTau2->at(0)/h.JetsAK8_NsubjettinessTau1->at(0)<0.75){
         return (true);
     }
     else{
